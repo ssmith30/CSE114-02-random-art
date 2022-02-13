@@ -13,6 +13,7 @@ import           Control.Monad.ST
 import           Codec.Picture.Png
 import           Codec.Picture.Types
 import qualified Data.Vector.Storable as V
+import Data.Fixed (E1)
 
 --------------------------------------------------------------------------------
 -- | A Data Type for Grayscale Expressions -------------------------------------
@@ -24,6 +25,7 @@ data Expr
   | Cosine  Expr
   | Average Expr Expr
   | Times   Expr Expr
+ -- | constr  Expr Expr Expr
   | Thresh  Expr Expr Expr Expr
   deriving (Show)
 
@@ -68,22 +70,30 @@ sampleExpr3 =
 
 -- | `exprToString e` converts an Expr `e` into a `String` representation.
 -- >>> exprToString sampleExpr0
--- "sin(pi*((x+y)/2))"
+-- WAS WAS WAS WAS "sin(pi*((x+y)/2))"
+-- WAS WAS WAS NOW "sin(pi*((x+y/2))"
+-- WAS WAS NOW "sin(pi*((x+y/2))"
+-- WAS NOW "sin(pi*((x+y/2))"
+-- NOW "sin(pi*((x+y/2))"
 --
 -- >>> exprToString sampleExpr1
--- "(x<y?x:sin(pi*x)*cos(pi*((x+y)/2)))"
+-- WAS WAS WAS WAS "(x<y?x:sin(pi*x)*cos(pi*((x+y)/2)))"
+-- WAS WAS WAS NOW "(x<y?x:sin(pi*x)*cos(pi*((x+y/2)))"
+-- WAS WAS NOW "(x<y?x:sin(pi*x)*cos(pi*((x+y/2)))"
+-- WAS NOW "(x<y?x:sin(pi*x)*cos(pi*((x+y/2)))"
+-- NOW "(x<y?x:sin(pi*x)*cos(pi*((x+y/2)))"
 --
 -- >>> exprToString sampleExpr2
 -- "(x<y?sin(pi*x):cos(pi*y))"
 
 exprToString :: Expr -> String
 exprToString VarX                 = "x"
-exprToString VarY                 = error "TBD:VarY"
-exprToString (Sine e)             = error "TBD:Sin"
-exprToString (Cosine e)           = error "TBD:Cos"
-exprToString (Average e1 e2)      = error "TBD:Avg"
-exprToString (Times e1 e2)        = error "TBD:Times"
-exprToString (Thresh e1 e2 e3 e4) = error "TBD:Thresh"
+exprToString VarY                 = "y"
+exprToString (Sine e)             = "sin(pi*" ++ exprToString e ++ ")"
+exprToString (Cosine e)           = "cos(pi*" ++ exprToString e ++ ")"
+exprToString (Average e1 e2)      = "((" ++ exprToString e1 ++ "+" ++ exprToString e2 ++ ")/2)"
+exprToString (Times e1 e2)        = exprToString e1 ++ "*" ++ exprToString e2
+exprToString (Thresh e1 e2 e3 e4) = "(" ++ exprToString e1 ++ "<" ++ exprToString e2 ++ "?" ++ exprToString e3 ++ ":" ++ exprToString e4 ++ ")"
 
 --------------------------------------------------------------------------------
 -- | Evaluating Expressions at a given X, Y co-ordinate ------------------------
@@ -99,7 +109,16 @@ exprToString (Thresh e1 e2 e3 e4) = error "TBD:Thresh"
 -- 0.8090169943749475
 
 eval :: Double -> Double -> Expr -> Double
-eval x y e = error "TBD:eval"
+eval x _ VarX = x
+eval _ y VarY = y 
+eval x y (Times e1 e2) = eval x y e1 * eval x y e2 
+eval x y (Sine e1) = sin (pi * eval x y e1)
+eval x y (Cosine e1) = cos (pi * eval x y e1)
+eval x y ( Average e1 e2) = (eval x y e1 + eval x y e2)/2 
+eval x y (Thresh e1 e2 e3 e4)
+        | eval x y e1 < eval x y e2 = eval x y e3
+        | otherwise = eval x y e4
+
 
 evalFn :: Double -> Double -> Expr -> Double
 evalFn x y e = assert (-1.0 <= rv && rv <= 1.0) rv
@@ -138,7 +157,12 @@ build 0
   | otherwise = VarY
   where
     r         = rand 10
-build d       = error "TBD:build"
+
+build 1       = Cosine(build 0)
+--build 2       = Average (build 0) (build 1)
+--build 3       = Times( build 1) (build 1)
+build d       = Sine (build (d-1))
+          
 
 --------------------------------------------------------------------------------
 -- | Best Image "Seeds" --------------------------------------------------------
@@ -146,16 +170,16 @@ build d       = error "TBD:build"
 
 -- grayscale
 g1, g2, g3 :: (Int, Int)
-g1 = (error "TBD:depth1", error "TBD:seed1")
-g2 = (error "TBD:depth2", error "TBD:seed2")
-g3 = (error "TBD:depth3", error "TBD:seed3")
+g1 = (12, 5)
+g2 = (11, 3)
+g3 = (13, 8)
 
 
 -- grayscale
 c1, c2, c3 :: (Int, Int)
-c1 = (error "TBD:depth1", error "TBD:seed1")
-c2 = (error "TBD:depth2", error "TBD:seed2")
-c3 = (error "TBD:depth3", error "TBD:seed3")
+c1 = (8, 9)
+c2 = (10, 12)
+c3 = (13, 11)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
