@@ -25,7 +25,8 @@ data Expr
   | Cosine  Expr
   | Average Expr Expr
   | Times   Expr Expr
- -- | constr  Expr Expr Expr
+  | SinTimes2 Expr Expr
+  | SinTimes3  Expr Expr Expr
   | Thresh  Expr Expr Expr Expr
   deriving (Show)
 
@@ -94,7 +95,8 @@ exprToString (Cosine e)           = "cos(pi*" ++ exprToString e ++ ")"
 exprToString (Average e1 e2)      = "((" ++ exprToString e1 ++ "+" ++ exprToString e2 ++ ")/2)"
 exprToString (Times e1 e2)        = exprToString e1 ++ "*" ++ exprToString e2
 exprToString (Thresh e1 e2 e3 e4) = "(" ++ exprToString e1 ++ "<" ++ exprToString e2 ++ "?" ++ exprToString e3 ++ ":" ++ exprToString e4 ++ ")"
-
+exprToString (SinTimes3 e1 e2 e3) =  "sin(pi*" ++ exprToString e1 ++ "*" ++ exprToString e2 ++ "*" ++ exprToString e3 ++ ")"  
+exprToString (SinTimes2 e1 e2)  =  "sin(pi*(" ++ exprToString e1 ++ "^" ++ exprToString  e2  ++ "))"
 --------------------------------------------------------------------------------
 -- | Evaluating Expressions at a given X, Y co-ordinate ------------------------
 --------------------------------------------------------------------------------
@@ -118,6 +120,9 @@ eval x y ( Average e1 e2) = (eval x y e1 + eval x y e2)/2
 eval x y (Thresh e1 e2 e3 e4)
         | eval x y e1 < eval x y e2 = eval x y e3
         | otherwise = eval x y e4
+eval x y (SinTimes3 e1 e2 e3 ) = sin (pi * (eval x y e1 * eval x y e2 * eval x y e3))
+eval x y (SinTimes2 e1 e2) = sin (pi * (eval x y e1 * eval x y e2))
+
 
 
 evalFn :: Double -> Double -> Expr -> Double
@@ -158,9 +163,19 @@ build 0
   where
     r         = rand 10
 
-build 1       = Cosine(build 0)
---build 2       = Average (build 0) (build 1)
---build 3       = Times( build 1) (build 1)
+build 1       = Cosine(build 0) 
+build 2       = Average (Sine (build 0)) (build 1)
+build 3       = Times( build 0) (build 2)
+build 4       = Thresh(build 0) (build 0) (build 3) (build 3)
+build 5       = SinTimes2 (Cosine (build 0) ) (Sine (build 4) ) 
+build 6       = Average (build 0) (build 5)
+build 7       = SinTimes3 (Cosine(build 0)) (Sine(build 0)) (Cosine (build 6))
+build 8       = Cosine(build 7) 
+build 9       = Average (Sine (build 8)) (Cosine(build 0))
+build 10       = Times (build 0) (build 9)
+build 11      = Sine (build 10)
+--build 12      = Times (build 11) (build 0)
+build 12      = Cosine(build 11)
 build d       = Sine (build (d-1))
           
 
@@ -170,16 +185,16 @@ build d       = Sine (build (d-1))
 
 -- grayscale
 g1, g2, g3 :: (Int, Int)
-g1 = (12, 5)
-g2 = (11, 3)
-g3 = (13, 8)
+g1 = (12, 15)
+g2 = (50, 75)
+g3 = (5, 8)
 
 
 -- grayscale
 c1, c2, c3 :: (Int, Int)
-c1 = (8, 9)
-c2 = (10, 12)
-c3 = (13, 11)
+c1 = (13, 13)
+c2 = (12, 11)
+c3 = (42, 69)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

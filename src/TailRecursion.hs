@@ -32,7 +32,9 @@ import Prelude hiding (lookup)
 -- 0
 
 assoc :: Int -> String -> [(String, Int)] -> Int
-assoc def key kvs = error "TBD:assoc"
+assoc def key []         = def
+assoc def key ((a,b):xs) | key == a = b
+                         | otherwise = assoc def key xs
 
 --------------------------------------------------------------------------------
 {- | `removeDuplicates ls`
@@ -58,8 +60,8 @@ removeDuplicates ls = reverse (helper [] ls)
     helper seen []     = seen
     helper seen (x:xs) = helper seen' rest'
       where
-        seen'          = error "TBD:helper:seen"
-        rest'          = error "TBD:helper:rest"
+        seen'          = if elem x seen then seen else x:seen
+        rest'          = xs
 
 --------------------------------------------------------------------------------
 {- | `wwhile f x` such that `wwhile f x` returns a value `x'` obtained from the repeated application of the input function `f`.
@@ -99,7 +101,14 @@ Thus, the final value will be `(false, <first value for which condition is no lo
 -- 512
 
 wwhile :: (a -> (Bool, a)) -> a -> a
-wwhile f x = error "TBD:wwhile"
+wwhile f x | not boolvalue = value 
+           | otherwise = wwhile f value 
+           where
+              myfirst(a,b) = a
+              mysecond(a,b) = b
+              results = f x 
+              value = mysecond results
+              boolvalue = myfirst results 
 
 --------------------------------------------------------------------------------
 {- | The **fixpoint** of a function `f` starting at `x`
@@ -141,7 +150,10 @@ The fixpoint of a function `f` is a point at which `f(x) = x`.
   -}
 
 fixpointL :: (Int -> Int) -> Int -> [Int]
-fixpointL f x = error "TBD:fixpointL"
+fixpointL f x = helper [] f x
+  where 
+    helper acc f x | f x == x = acc++[x]
+                   | otherwise = helper(acc ++ [x])f( f x )
 
 -- You should see the following behavior at the prompt:
 
@@ -176,8 +188,9 @@ collatz n
 
 fixpointW :: (Int -> Int) -> Int -> Int
 fixpointW f x = wwhile wwf x
- where
-   wwf        = error "TBD:fixpoint:wwf"
+  where
+    wwf x   | f  x == x = (False, x) 
+            |  otherwise = (True, f x)
 
 -- >>> fixpointW collatz 1
 -- 1
